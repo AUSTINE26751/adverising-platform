@@ -1,0 +1,156 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from "/components/ui/button";
+import { Input } from "/components/ui/input";
+import { Label } from "/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "/components/ui/select";
+
+const AdvertisingPlatform = () => {
+  const [campaigns, setCampaigns] = useState([]);
+  const [campaignName, setCampaignName] = useState('');
+  const [budget, setBudget] = useState(0);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
+  const [adContent, setAdContent] = useState('');
+
+  const handleCreateCampaign = async () => {
+    try {
+      const response = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: campaignName,
+          budget,
+          startDate,
+          endDate,
+          targetAudience,
+          adContent,
+        }),
+      });
+      const data = await response.json();
+      setCampaigns([...campaigns, data]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleViewCampaigns = async () => {
+    try {
+      const response = await fetch('/api/campaigns');
+      const data = await response.json();
+      setCampaigns(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleEditCampaign = async (campaignId) => {
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: campaignName,
+          budget,
+          startDate,
+          endDate,
+          targetAudience,
+          adContent,
+        }),
+      });
+      const data = await response.json();
+      setCampaigns(campaigns.map((campaign) => (campaign.campaignId === campaignId ? data : campaign)));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteCampaign = async (campaignId) => {
+    try {
+      await fetch(`/api/campaigns/${campaignId}`, {
+        method: 'DELETE',
+      });
+      setCampaigns(campaigns.filter((campaign) => campaign.campaignId !== campaignId));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    handleViewCampaigns();
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center space-y-4 p-4">
+      <h1 className="text-3xl font-bold">Advertising Platform</h1>
+      <form className="flex flex-col space-y-2">
+        <Label htmlFor="campaignName">Campaign Name</Label>
+        <Input
+          type="text"
+          id="campaignName"
+          value={campaignName}
+          onChange={(e) => setCampaignName(e.target.value)}
+        />
+        <Label htmlFor="budget">Budget</Label>
+        <Input
+          type="number"
+          id="budget"
+          value={budget}
+          onChange={(e) => setBudget(Number(e.target.value))}
+        />
+        <Label htmlFor="startDate">Start Date</Label>
+        <Input
+          type="date"
+          id="startDate"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+        <Label htmlFor="endDate">End Date</Label>
+        <Input
+          type="date"
+          id="endDate"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
+        <Label htmlFor="targetAudience">Target Audience</Label>
+        <Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select target audience" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="demographics">Demographics</SelectItem>
+            <SelectItem value="interests">Interests</SelectItem>
+          </SelectContent>
+        </Select>
+        <Label htmlFor="adContent">Ad Content</Label>
+        <Input
+          type="text"
+          id="adContent"
+          value={adContent}
+          onChange={(e) => setAdContent(e.target.value)}
+        />
+        <Button onClick={handleCreateCampaign}>Create Campaign</Button>
+      </form>
+      <ul className="flex flex-col space-y-2">
+        {campaigns.map((campaign) => (
+          <li key={campaign.campaignId} className="flex flex-col space-y-2">
+            <h2 className="text-xl font-bold">{campaign.name}</h2>
+            <p>Budget: {campaign.budget}</p>
+            <p>Start Date: {campaign.startDate}</p>
+            <p>End Date: {campaign.endDate}</p>
+            <p>Target Audience: {campaign.targetAudience}</p>
+            <p>Ad Content: {campaign.adContent}</p>
+            <Button onClick={() => handleEditCampaign(campaign.campaignId)}>Edit</Button>
+            <Button variant="destructive" onClick={() => handleDeleteCampaign(campaign.campaignId)}>Delete</Button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default AdvertisingPlatform;
